@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+<title>Listagem de Processos do Servidor</title>
+<script src="/socket.io/socket.io.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/purecss@3.0.0/build/pure-min.css" integrity="sha384-X38yfunGUhNzHpBaEBsWLO+A0HDYOQi8ufWDkZ0k9e0eXz/tH3II7uKZ9msv++Ls" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/purecss@3.0.0/build/grids-responsive-min.css">
+</head>
+<body>
+<main id="react-app">
+  <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+  <script src="https://unpkg.com/react@16/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js" crossorigin></script>
+  <script type="text/babel">
+    var App = (props) => {
+      const { useState, useEffect } = React;
+
+      const [processes, setProcesses] = useState({});
+      const [status, setStatus] = useState(false);
+
+      useEffect(() => {
+        const client = io('http://localhost:3000/process');
+
+        const connect = () => setStatus(true);
+        const disconnect = () => setStatus(false);
+        const addProcess = ({message}) => {
+          processes[message.pid] = message;
+          return setProcesses({...processes});
+        }
+        const removeProcess = ({message}) => {
+          delete processes[message];
+          return setProcesses({...processes});
+        }
+
+        client.on('connect', connect);
+        client.on('disconnect', disconnect);
+        client.on('addProcess', addProcess);
+        client.on('removeProcess', removeProcess);
+
+        return () => {
+          client.off('connect', connect);
+          client.off('disconnect', disconnect);
+          client.off('addProcess', addProcess);
+          client.off('removeProcess', removeProcess);
+        }
+      }, []);
+
+      return (
+        <div className="pure-g">
+          <div>Status: {status?'connected':'disconnected'}</div>
+          <div className="table-responsive">
+            <table className="mq-table pure-table-bordered pure-table">
+              <thead>
+                <tr>
+                  <th>Pid</th>
+                  <th>Command</th>
+                  <th>Start Date</th>
+                </tr>
+              </thead>
+              <tbody>
+              {Object.keys(processes).map((pid) => (
+                <tr key={pid}>
+                    <td>{processes[pid].pid}</td>
+                    <td>{processes[pid].name}</td>
+                    <td>{processes[pid].startDate}</td>
+                </tr>
+              ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      );
+    };
+
+    ReactDOM.render(
+        React.createElement(App),
+        document.getElementById('react-app')
+    );
+  </script>
+</main>
+</body>
+</html>

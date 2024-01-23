@@ -1,0 +1,17 @@
+version: "3.6"
+services:
+  ws-list-processes:
+    container_name: ws-list-processes
+    build:
+      dockerfile: Dockerfile
+      context: .
+    command: bash -c 'npm install && npm run start'
+    tty: true
+    stdin_open: true
+    user: node
+    ports:
+      - "3000:3000"
+    working_dir: /usr/src/app
+    volumes:
+      - ./:/usr/src/app
+
